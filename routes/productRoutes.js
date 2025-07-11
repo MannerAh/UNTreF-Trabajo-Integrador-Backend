@@ -1,5 +1,5 @@
 const express = require('express');
-const { getAllProducts, getProductByCode, postProduct, patchProduct, deleteByCode } = require('../controllers/productController');
+const { getAllProducts, getProductByCode, postProduct, patchProduct, deleteByCode, getProductByQuery, getProductByCategory, getProductByPrice, multipleProducts } = require('../controllers/productController');
 const router = express.Router();
 
 // GET /productos
@@ -18,7 +18,7 @@ router.get('/categoria/:nombre', getProductByCategory);
 router.get('/precio/:min-:max', getProductByPrice);
 
 // POST /productos/masivo
-router.post('/masivo', scanProducts);
+router.post('/masivo', multipleProducts);
 
 // GET /productos/:codigo
 router.get('/:codigo', getProductByCode);
