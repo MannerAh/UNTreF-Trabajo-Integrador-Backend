@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
-const express = require('express');
 const { Product } = require('../models/computacion');
 const { connectDB } = require('../config/database');
+const { ca } = require('zod/v4/locales');
 
 
 // GET /productos
@@ -19,7 +18,8 @@ const getAllProducts = async (req, res) => {
 const getProductByCode = async (req, res) => {
     try {
         connectDB();
-        const output = await Product.findById(req.params.codigo);
+        const code = parseInt(req.params.codigo);
+        const output = await Product.findOne({ codigo: code });
         if (!output) {
             res.status(404).json({ error: 'Producto no encontrado' });
         } else {
@@ -65,7 +65,7 @@ const patchProduct = async (req, res) => {
     const code = parseInt(req.params.codigo);
     try {
         connectDB();
-        const product = await Product.findByOneAndUpdate(code, {nombre, precio, categoria});
+        const product = await Product.findOneAndUpdate({ codigo: code }, { nombre, precio, categoria });
         if (!product) {
             res.status(404).json({ error: 'Product not found' });
         } else {
@@ -82,7 +82,7 @@ const deleteByCode = async (req, res) => {
     const code = parseInt(req.params.codigo);
     try {
         connectDB();
-        const product = await Product.findOneAndDelete(code); 
+        const product = await Product.findOneAndDelete({codigo: code}); 
         if (!product) {
             res.status(404).json({ error: 'Product not found' });
             } else {
@@ -93,16 +93,82 @@ const deleteByCode = async (req, res) => {
     }
 }
 
-// GET /productos/buscar
+// GET /productos/buscar?q={termino_de_busqueda}
+const getProductByQuery = async (req, res) => {
+    try {
+        connectDB();
+        const { q } = req.query;
 
+        if (!q) {
+            return res.status(400).json({ error: 'No query provided' });
+        }
+        const products = await Product.find({
+            nombre: { $regex: q, $options: 'i' }})
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
 
 // GET /productos/categoria/:nombre
+const getProductByCategory = async (req, res) => {
+    try {
+        connectDB();
+        const { nombre } = req.params;
 
+        // Buscar productos con el nombre especificado en su array de categorias
+        const products = await Product.find({
+            categoria: { $in: [nombre] }
+        })
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
 
 // GET /productos/precio/:min-:max
+const getProductByPrice = async (req, res) => {
+    try {
+        connectDB();
+        const { min, max } = req.params;
 
+        const minPrice = parseFloat(min);
+        const maxPrice = parseFloat(max);
+
+        if (isNaN(minPrice) || isNaN(maxPrice)) {
+            return res.status(400).json({ error: 'Prices must be valid' });
+        }
+        if (minPrice > maxPrice) {
+            return res.status(400).json({ error: 'Invalid price range' });
+        }
+
+        const products = await Product.find({
+            precio: {$gte: minPrice, $lte: maxPrice}
+        })
+        res.status(200).json(products);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+}
 
 // POST /productos/masivo
+const multipleProducts = async (req, res) => {
+    try {
+        connectDB();
+        const { products } = req.body;
+    } catch (error) {
+    res.status(500).json({ error: error.message });
+    }
+}
 
-
-module.exports = { getAllProducts, }
+module.exports = { 
+    getAllProducts,
+    getProductByCode,
+    postProduct,
+    patchProduct,
+    deleteByCode,
+    getProductByQuery,
+    getProductByCategory,
+    getProductByPrice,
+    multipleProducts
+}
