@@ -78,7 +78,20 @@ const patchProduct = async (req, res) => {
 
 
 // DELETE /productos/:codigo
-
+const deleteByCode = async (req, res) => {
+    const code = parseInt(req.params.codigo);
+    try {
+        connectDB();
+        const product = await Product.findOneAndDelete(code); 
+        if (!product) {
+            res.status(404).json({ error: 'Product not found' });
+            } else {
+            res.status(200).json({ message: 'Product deleted succesfully', product });
+        }
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+}
 
 // GET /productos/buscar
 
