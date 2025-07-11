@@ -17,7 +17,7 @@ const ProductSchema = new Schema({
     categoria: {
         type: [String],
         required: true,
-        minlenght: 1
+        minlength: 1
     }
 })
 
