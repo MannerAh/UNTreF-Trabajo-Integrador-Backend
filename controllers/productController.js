@@ -1,16 +1,24 @@
 const { Product } = require('../models/computacion');
-const { connectDB } = require('../config/database');
-const { ca } = require('zod/v4/locales');
-
+const connectDB  = require('../config/database');
 
 // GET /productos
 const getAllProducts = async (req, res) => {
     try {
-        connectDB();
-        const products = await Product.find()
+        console.log('📡 Intentando conectar a la base de datos...');
+        await connectDB();
+        
+        console.log('🔍 Buscando productos en la base de datos...');
+        const products = await Product.find();
+        
+        console.log(`✅ Se encontraron ${products.length} productos`);
         res.status(200).json(products);
     } catch (error) {
-        res.status(500).json({ error });
+        console.error('❌ Error en getAllProducts:', error);
+        // Devolver el mensaje de error real
+        res.status(500).json({ 
+            error: error.message,
+            stack: error.stack // Solo para debugging, quitar en producción
+        });
     }
 }
 
