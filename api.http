@@ -22,7 +22,7 @@ Accept: application/json
 
 ### 2. Obtener un producto por su código
 # Reemplaza '1' con un código de producto que exista en tu base de datos.
-GET {{api_url}}/productos/5695
+GET {{api_url}}/productos/1143
 Accept: application/json
 
 ### 2.1 Obtener un producto con un código inexistente (debería dar 404)
@@ -53,7 +53,7 @@ Content-Type: application/json
 
 ### 5. Eliminar un producto
 # Reemplaza '2' con un código de producto que desees eliminar.
-DELETE {{api_url}}/productos/5695
+DELETE {{api_url}}/productos/8037
 Accept: application/json
 
 

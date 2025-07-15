@@ -14,10 +14,8 @@ const getAllProducts = async (req, res) => {
         res.status(200).json(products);
     } catch (error) {
         console.error('❌ Error en getAllProducts:', error);
-        // Devolver el mensaje de error real
         res.status(500).json({ 
             error: error.message,
-            stack: error.stack // Solo para debugging, quitar en producción
         });
     }
 }
@@ -73,6 +71,7 @@ const patchProduct = async (req, res) => {
     const code = parseInt(req.params.codigo);
     try {
         connectDB();
+        // Usamos findOne porque el byId es para el _Id de MongoDB, que no estamos usando
         const product = await Product.findOneAndUpdate({ codigo: code }, { nombre, precio, categoria });
         if (!product) {
             res.status(404).json({ error: 'Product not found' });
@@ -163,11 +162,81 @@ const getProductByPrice = async (req, res) => {
 const multipleProducts = async (req, res) => {
     try {
         connectDB();
-        const { products } = req.body;
+        const productosArray = req.body;
+        
+        // Validar que se envió un array
+        if (!Array.isArray(productosArray)) {
+            return res.status(400).json({ error: 'Body must be an array' });
+        }
+        
+        if (productosArray.length === 0) {
+            return res.status(400).json({ error: 'Array must not be empty' });
+        }
+        
+        const productosCreados = [];
+        const errores = [];
+        
+        // Procesar cada producto
+        for (let i = 0; i < productosArray.length; i++) {
+            const { nombre, precio, categoria } = productosArray[i];
+            
+            try {
+                // Validar campos requeridos
+                if (!nombre || !precio || !categoria) {
+                    errores.push({
+                        indice: i,
+                        error: 'Fields nombre, precio y categoria are required'
+                    });
+                    continue;
+                }
+                
+                // Generar código único
+                let codigo;
+                let codigoExiste = true;
+                
+                while (codigoExiste) {
+                    codigo = Math.floor(1000 + Math.random() * 9000);
+                    const existingProduct = await Product.findOne({ codigo });
+                    if (!existingProduct) {
+                        codigoExiste = false;
+                    }
+                }
+                
+                // Crear producto
+                const newProduct = new Product({
+                    nombre,
+                    precio,
+                    categoria,
+                    codigo: codigo
+                });
+                
+                await newProduct.save();
+                productosCreados.push(newProduct);
+                
+            } catch (error) {
+                errores.push({
+                    indice: i,
+                    error: error.message
+                });
+            }
+        }
+        
+        // Respuesta con productos creados y errores si los hay
+        const respuesta = {
+            message: `${productosCreados.length} products created succesfully`,
+            productosCreados,
+            totalProcesados: productosArray.length,
+            exitosos: productosCreados.length,
+            errores: errores.length > 0 ? errores : undefined
+        };
+        
+        res.status(201).json(respuesta);
+        
     } catch (error) {
-    res.status(500).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
-}
+};
+
 
 module.exports = { 
     getAllProducts,
